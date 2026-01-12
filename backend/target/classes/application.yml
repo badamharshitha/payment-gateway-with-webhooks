@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payment_gateway
+    username: gateway_user
+    password: gateway_pass
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
