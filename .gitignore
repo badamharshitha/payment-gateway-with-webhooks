@@ -1,0 +1,51 @@
+# ===== Java =====
+*.class
+*.log
+*.jar
+*.war
+*.ear
+target/
+out/
+
+# ===== Maven =====
+.mvn/
+dependency-reduced-pom.xml
+
+# ===== IDEs =====
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Spring Boot =====
+application-local.yml
+application-dev.yml
+application-prod.yml
+
+# ===== Docker =====
+**/docker-data/
+**/postgres-data/
+
+# ===== Environment variables =====
+.env
+.env.*
+
+# ===== Logs =====
+logs/
+*.log
+
+# ===== Node (for future SDK / dashboard) =====
+node_modules/
+dist/
+
+# ===== Test coverage =====
+coverage/
+
+# ===== Redis dumps =====
+dump.rdb
