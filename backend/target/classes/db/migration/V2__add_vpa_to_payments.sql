@@ -1,0 +1,2 @@
+ALTER TABLE payments
+ADD COLUMN vpa VARCHAR(255);
