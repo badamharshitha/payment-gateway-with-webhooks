@@ -1,63 +1,56 @@
-package com.gateway.security;
+package com.gateway.controller;
 
+import com.gateway.dto.CreatePaymentRequest;
+import com.gateway.dto.PaymentResponse;
 import com.gateway.entity.Merchant;
-import com.gateway.repository.MerchantRepository;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
+import com.gateway.entity.Payment;
+import com.gateway.repository.PaymentRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
-@Component
-public class ApiAuthFilter extends OncePerRequestFilter {
+@RestController
+@RequestMapping("/api/v1")
+public class PaymentController {
 
-    private final MerchantRepository merchantRepository;
+    private final PaymentRepository paymentRepository;
 
-    public ApiAuthFilter(MerchantRepository merchantRepository) {
-        this.merchantRepository = merchantRepository;
+    public PaymentController(PaymentRepository paymentRepository) {
+        this.paymentRepository = paymentRepository;
     }
 
-    @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+    @PostMapping("/payments")
+    public ResponseEntity<PaymentResponse> createPayment(
+            @RequestBody CreatePaymentRequest request,
+            HttpServletRequest httpRequest
+    ) {
 
-        String path = request.getRequestURI();
-
-        // Allow non-API routes
-        if (!path.startsWith("/api/v1")) {
-            filterChain.doFilter(request, response);
-            return;
+        // 🔴 ROOT CAUSE FIX: merchant attribute may be null → causing 500
+        Object merchantObj = httpRequest.getAttribute("merchant");
+        if (merchantObj == null) {
+            throw new RuntimeException("Merchant not authenticated");
         }
 
-        String apiKey = request.getHeader("X-Api-Key");
-        String apiSecret = request.getHeader("X-Api-Secret");
+        Merchant merchant = (Merchant) merchantObj;
 
-        if (apiKey == null || apiSecret == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Missing API credentials");
-            return;
-        }
+        Payment payment = new Payment();
+        payment.setId("pay_" + UUID.randomUUID());
+        payment.setMerchantId(merchant.getId());
+        payment.setOrderId(request.getOrderId());
+        payment.setAmount(request.getAmount());
+        payment.setCurrency("INR");
+        payment.setMethod(request.getMethod());
+        payment.setVpa(request.getVpa());
+        payment.setStatus("created");
+        payment.setCaptured(false);
+        payment.setCreatedAt(LocalDateTime.now());
+        payment.setUpdatedAt(LocalDateTime.now());
 
-        Optional<Merchant> merchant =
-                merchantRepository.findByApiKeyAndApiSecret(apiKey, apiSecret);
+        paymentRepository.save(payment);
 
-        if (merchant.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Invalid API credentials");
-            return;
-        }
-
-        // Attach merchant to request context
-        request.setAttribute("merchant", merchant);
-
-        // Continue request
-        filterChain.doFilter(request, response);
+        return ResponseEntity.ok(PaymentResponse.from(payment));
     }
 }
