@@ -55,7 +55,7 @@ public class ApiAuthFilter extends OncePerRequestFilter {
         }
 
         // Attach merchant to request context
-        request.setAttribute("merchant", merchant.get());
+        request.setAttribute("merchant", merchant);
 
         // Continue request
         filterChain.doFilter(request, response);
